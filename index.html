@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>260506_StrangeAttractor</title>
+    <style>
+      #ui-panel {
+        visibility: hidden;
+        opacity: 0;
+      }
+
+      html.ui-ready #ui-panel {
+        visibility: visible;
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="webgpu-warning" class="webgpu-warning" hidden>
+      WebGPU is required for this project.
+    </div>
+
+    <div id="ui-panel" class="apple-panel">
+      <div id="ui-handle" class="panel-drag-handle">
+        <button
+          type="button"
+          id="collapse-toggle"
+          class="collapse-button panel-collapse-toggle"
+          aria-label="Collapse controls"
+          aria-expanded="true"
+        >
+          <span class="collapse-icon" aria-hidden="true"></span>
+        </button>
+      </div>
+      <div class="ui-body panel-sections">
+        <div class="control-hint">Wheel = Zoom, MMB = Pan, RMB = Orbit</div>
+
+        <section class="panel-section">
+          <div class="panel-section-header">
+            <span class="panel-section-label">Simulation</span>
+          </div>
+          <div class="panel-section-content panel-controls-stack">
+            <div class="control control-grid-2">
+              <button type="button" id="start-sim" class="pill-button control-button-wide">Start</button>
+              <button type="button" id="reset-sim" class="pill-button control-button-wide">Reset</button>
+            </div>
+
+            <label class="control">
+              <div class="control-row">
+                <span>Simulation Rate</span>
+                <span id="simulation-rate-value">1.00</span>
+              </div>
+              <input type="range" id="simulation-rate" min="0.05" max="8" step="0.01" value="1" />
+            </label>
+
+            <label class="control">
+              <div class="control-row">
+                <span>Particle Amount</span>
+                <span id="particle-amount-value">100000</span>
+              </div>
+              <input type="range" id="particle-amount" min="1000" max="500000" step="1000" value="100000" />
+            </label>
+
+            <div id="runtime-stats" class="runtime-stats">FPS 0 | Particles 100000 | Points 0 | Thomas | WebGPU</div>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <div class="panel-section-header">
+            <span class="panel-section-label">Attractor</span>
+          </div>
+          <div class="panel-section-content panel-controls-stack">
+            <label class="control">
+              <div class="control-row">
+                <span>Preset</span>
+              </div>
+              <span class="select-shell select-control">
+                <select id="attractor-preset" class="native-select-hidden"></select>
+                <button type="button" id="attractor-preset-trigger" class="select-trigger">Thomas</button>
+                <ul id="attractor-preset-menu" class="select-menu" hidden></ul>
+              </span>
+            </label>
+
+            <div id="parameter-controls" class="panel-controls-stack"></div>
+
+            <div class="control control-grid-2">
+              <button type="button" id="randomize-attractor" class="pill-button control-button-wide">Randomize</button>
+              <button type="button" id="default-attractor" class="pill-button control-button-wide">Default</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <div class="panel-section-header">
+            <span class="panel-section-label">Material</span>
+          </div>
+          <div class="panel-section-content panel-controls-stack">
+            <div class="control control-grid-2">
+              <label class="control compact">
+                <div class="control-row">
+                  <span>Gradient Start</span>
+                </div>
+                <input type="color" id="gradient-start-color" class="color-picker" value="#b19eff" />
+              </label>
+              <label class="control compact">
+                <div class="control-row">
+                  <span>Gradient End</span>
+                </div>
+                <input type="color" id="gradient-end-color" class="color-picker" value="#ffae00" />
+              </label>
+            </div>
+
+            <label class="control">
+              <div class="control-row">
+                <span>Gradient Contrast</span>
+                <span id="gradient-contrast-value">1.40</span>
+              </div>
+              <input type="range" id="gradient-contrast" min="0.2" max="3" step="0.01" value="1.4" />
+            </label>
+
+            <label class="control">
+              <div class="control-row">
+                <span>Gradient Bias</span>
+                <span id="gradient-bias-value">-0.40</span>
+              </div>
+              <input type="range" id="gradient-bias" min="-1" max="1" step="0.01" value="-0.4" />
+            </label>
+
+            <label class="control">
+              <div class="control-row">
+                <span>Gradient Blur</span>
+                <span id="gradient-blur-value">0.35</span>
+              </div>
+              <input type="range" id="gradient-blur" min="0" max="1" step="0.01" value="0.35" />
+            </label>
+
+            <label class="control">
+              <div class="control-row">
+                <span>Particle Size</span>
+                <span id="particle-size-value">0.045</span>
+              </div>
+              <input type="range" id="particle-size" min="0.005" max="0.16" step="0.001" value="0.045" />
+            </label>
+
+            <label class="control toggle-control toggle-control-stacked">
+              <span>Curve Visibility</span>
+              <input type="checkbox" id="curve-visible" checked />
+            </label>
+          </div>
+        </section>
+      </div>
+      <div id="ui-handle-bottom"></div>
+    </div>
+
+    <canvas id="app-canvas"></canvas>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
