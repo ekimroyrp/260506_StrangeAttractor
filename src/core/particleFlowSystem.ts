@@ -14,12 +14,23 @@ import {
   instanceIndex,
   instancedArray,
   mix,
+  mul,
   shapeCircle,
   uniform,
   uint,
+  vec3,
   vec4,
 } from 'three/tsl';
 import type { CurveData } from '../types';
+
+const BASE_OPACITY_AMOUNT = 100000;
+const BASE_PARTICLE_OPACITY = 0.006;
+
+export function getParticleOpacityForAmount(amount: number): number {
+  const safeAmount = Math.max(1, amount);
+  const opacity = BASE_PARTICLE_OPACITY * Math.sqrt(BASE_OPACITY_AMOUNT / safeAmount);
+  return Math.min(0.035, Math.max(0.0015, opacity));
+}
 
 export class ParticleFlowSystem {
   readonly object: Sprite;
@@ -30,6 +41,8 @@ export class ParticleFlowSystem {
   private readonly simulationRate = uniform(1);
   private readonly deltaTime = uniform(1 / 60);
   private readonly particleSize = uniform(0.045);
+  private readonly particleOpacity = uniform(BASE_PARTICLE_OPACITY);
+  private readonly particleBrightness = uniform(0.85);
   private readonly initCompute: Parameters<WebGPURenderer['compute']>[0];
   private readonly updateCompute: Parameters<WebGPURenderer['compute']>[0];
   private readonly material: SpriteNodeMaterial;
@@ -47,6 +60,7 @@ export class ParticleFlowSystem {
     this.scene = scene;
     this.amount = amount;
     this.particleSize.value = particleSize;
+    this.particleOpacity.value = getParticleOpacityForAmount(amount);
 
     const pathPositions = attributeArray(curve.positions, 'vec3');
     const pathColors = attributeArray(curveColors, 'vec3');
@@ -96,13 +110,14 @@ export class ParticleFlowSystem {
       blending: AdditiveBlending,
       depthWrite: false,
       transparent: true,
-      opacity: 0.72,
+      opacity: 1,
     });
+    const particleRgb = vec3(particleColor.toAttribute());
+    const saturatedParticleRgb = mul(particleRgb, particleRgb);
     this.material.positionNode = particlePosition.toAttribute();
-    this.material.colorNode = vec4(particleColor.toAttribute(), 1);
+    this.material.colorNode = vec4(mul(saturatedParticleRgb, this.particleBrightness), this.particleOpacity);
     this.material.opacityNode = shapeCircle();
     this.material.scaleNode = this.particleSize;
-    this.material.alphaToCoverage = true;
 
     this.geometry = new BufferGeometry();
     this.object = new Sprite(this.material);
@@ -136,6 +151,8 @@ export class ParticleFlowSystem {
 
   dispose(): void {
     this.scene.remove(this.object);
+    (this.initCompute as { dispose?: () => void }).dispose?.();
+    (this.updateCompute as { dispose?: () => void }).dispose?.();
     this.geometry.dispose();
     this.material.dispose();
   }

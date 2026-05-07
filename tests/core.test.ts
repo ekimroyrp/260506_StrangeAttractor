@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ATTRACTOR_PRESETS, getParameterRange, getPreset, randomizeParams } from '../src/core/attractorPresets';
 import { generateAttractorCurve, rk4Step } from '../src/core/curveGenerator';
 import { HistoryController } from '../src/core/history';
+import { getParticleOpacityForAmount } from '../src/core/particleFlowSystem';
 import type { AttractorParams, SerializableAppState, Vec3Tuple } from '../src/types';
 
 function closeVec3(actual: Vec3Tuple, expected: Vec3Tuple, tolerance = 1e-9): void {
@@ -132,5 +133,18 @@ describe('history controller', () => {
     history.commit(state);
     expect(history.undoCount).toBe(0);
     expect(history.redoCount).toBe(0);
+  });
+});
+
+describe('particle display tuning', () => {
+  it('reduces additive opacity as particle counts rise', () => {
+    const low = getParticleOpacityForAmount(1000);
+    const defaultAmount = getParticleOpacityForAmount(100000);
+    const high = getParticleOpacityForAmount(500000);
+
+    expect(low).toBeGreaterThan(defaultAmount);
+    expect(defaultAmount).toBeGreaterThan(high);
+    expect(high).toBeGreaterThanOrEqual(0.0015);
+    expect(low).toBeLessThanOrEqual(0.035);
   });
 });

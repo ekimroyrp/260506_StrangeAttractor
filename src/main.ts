@@ -381,6 +381,7 @@ function rebuildParticleSystem(): void {
 }
 
 function rebuildCurveAndParticles(): void {
+  stopSimulation();
   const preset = getPreset(selectedPresetId);
   curveData = generateAttractorCurve(preset, currentParams);
   curveColors = buildGradientColors(curveData.progress, materialSettings);
@@ -394,7 +395,6 @@ function rebuildCurveAndParticles(): void {
   }
 
   rebuildParticleSystem();
-  stopSimulation();
   updateStats();
 }
 
@@ -642,7 +642,11 @@ function bindStaticControls(): void {
       updateStats();
     },
     () => {
+      const wasRunning = simulationSettings.running;
+      stopSimulation();
       rebuildParticleSystem();
+      simulationSettings.running = wasRunning;
+      setStartButtonState(wasRunning);
       commitHistoryIfChanged();
     },
   );
