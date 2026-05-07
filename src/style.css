@@ -28,7 +28,7 @@ body {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background: radial-gradient(circle at 20% 10%, #21244f 0%, #111525 42%, #0d101b 100%);
+  background: #000;
   font-family: "SF Pro Text", "Avenir Next", "Helvetica Neue", sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -434,15 +434,9 @@ body {
   box-shadow: inset 0 0 0 1px rgba(255, 162, 72, 0.25);
 }
 
-#reset-sim,
-#default-attractor {
+#reset-sim {
   border-color: rgba(238, 94, 94, 0.95);
   box-shadow: inset 0 0 0 1px rgba(238, 94, 94, 0.25);
-}
-
-#randomize-attractor {
-  border-color: rgba(102, 170, 255, 0.95);
-  box-shadow: inset 0 0 0 1px rgba(102, 170, 255, 0.25);
 }
 
 input[type="range"] {

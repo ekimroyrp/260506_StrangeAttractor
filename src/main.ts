@@ -52,6 +52,7 @@ type UiRefs = {
   gradientBlur: HTMLInputElement;
   gradientBlurValue: HTMLSpanElement;
   curveVisible: HTMLInputElement;
+  exportScreenshot: HTMLButtonElement;
 };
 
 function revealUiWhenStyled(maxWaitMs = 1500): void {
@@ -291,6 +292,7 @@ const ui: UiRefs = {
   gradientBlur: requiredElement('gradient-blur', isInput),
   gradientBlurValue: requiredElement('gradient-blur-value', isSpan),
   curveVisible: requiredElement('curve-visible', isInput),
+  exportScreenshot: requiredElement('export-screenshot', isButton),
 };
 
 const queriedCanvas = document.querySelector<HTMLCanvasElement>('#app-canvas');
@@ -300,6 +302,8 @@ if (!queriedCanvas) {
 const appCanvas: HTMLCanvasElement = queriedCanvas;
 
 revealUiWhenStyled();
+
+const EXPORT_BASE_NAME = '260506_StrangeAttractor';
 
 let selectedPresetId: AttractorId = 'thomas';
 let currentParams: AttractorParams = cloneParams(getPreset(selectedPresetId).defaultParams);
@@ -327,9 +331,12 @@ let curveLine: Line;
 let particleSystem: ParticleFlowSystem | null = null;
 let renderer: WebGPURenderer;
 let scene: Scene;
+let camera: PerspectiveCamera;
 let controls: OrbitControls;
+let particlesCleared = false;
 let draggingPanel = false;
 const dragOffset = { x: 0, y: 0 };
+let screenshotExportCount = 0;
 
 function getSerializableState(): SerializableAppState {
   return {
@@ -352,12 +359,48 @@ function stopSimulation(): void {
   setStartButtonState(false);
 }
 
+function clearParticlesUntilStart(): void {
+  particlesCleared = true;
+  particleSystem?.setVisible(false);
+}
+
+function showParticlesForStart(): void {
+  if (!particlesCleared) {
+    return;
+  }
+  particlesCleared = false;
+  particleSystem?.setVisible(true);
+  particleSystem?.reset();
+}
+
 function updateStats(fps = 0): void {
-  const preset = getPreset(selectedPresetId);
-  const pointCount = curveData?.pointCount ?? 0;
-  ui.runtimeStats.textContent =
-    `FPS ${Math.round(fps)} | Particles ${formatStatsNumber(simulationSettings.particleAmount)} | ` +
-    `Points ${formatStatsNumber(pointCount)} | ${preset.label} | WebGPU`;
+  ui.runtimeStats.textContent = `WebGPU | FPS ${Math.round(fps)} | Particles ${formatStatsNumber(simulationSettings.particleAmount)}`;
+}
+
+function nextScreenshotName(): string {
+  screenshotExportCount += 1;
+  const serial = String(screenshotExportCount).padStart(3, '0');
+  return `${EXPORT_BASE_NAME}_${serial}.png`;
+}
+
+function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportScreenshot(): void {
+  renderer.render(scene, camera);
+  appCanvas.toBlob((blob) => {
+    if (!blob) {
+      return;
+    }
+
+    downloadBlob(blob, nextScreenshotName());
+  }, 'image/png');
 }
 
 function setPresetSelection(presetId: AttractorId): void {
@@ -384,10 +427,10 @@ function rebuildParticleSystem(): void {
     materialSettings.particleSpread,
   );
   particleSystem.setSimulationRate(simulationSettings.simulationRate);
+  particleSystem.setVisible(!particlesCleared);
 }
 
 function rebuildCurveAndParticles(): void {
-  stopSimulation();
   const preset = getPreset(selectedPresetId);
   curveData = generateAttractorCurve(preset, currentParams);
   curveColors = buildGradientColors(curveData.progress, materialSettings);
@@ -401,6 +444,9 @@ function rebuildCurveAndParticles(): void {
   }
 
   rebuildParticleSystem();
+  if (!simulationSettings.running && !particlesCleared) {
+    particleSystem?.refreshPositions();
+  }
   updateStats();
 }
 
@@ -586,15 +632,21 @@ function bindSectionCollapseToggles(): void {
 }
 
 function clampPanelToViewport(): void {
+  if (window.innerWidth <= 700) {
+    ui.panel.style.left = '';
+    ui.panel.style.top = '';
+    return;
+  }
+
   const panelRect = ui.panel.getBoundingClientRect();
   const width = panelRect.width;
   const height = panelRect.height;
-  const left = Number.parseFloat(ui.panel.style.left || '0');
-  const top = Number.parseFloat(ui.panel.style.top || '0');
-  const maxLeft = Math.max(0, window.innerWidth - width);
-  const maxTop = Math.max(0, window.innerHeight - height);
-  ui.panel.style.left = `${Math.min(maxLeft, Math.max(0, left))}px`;
-  ui.panel.style.top = `${Math.min(maxTop, Math.max(0, top))}px`;
+  const maxLeft = Math.max(12, window.innerWidth - width - 12);
+  const maxTop = Math.max(12, window.innerHeight - height - 12);
+  ui.panel.style.left = `${Math.min(maxLeft, Math.max(12, panelRect.left))}px`;
+  ui.panel.style.top = `${Math.min(maxTop, Math.max(12, panelRect.top))}px`;
+  ui.panel.style.right = 'auto';
+  ui.panel.style.bottom = 'auto';
 }
 
 function bindPanelDrag(): void {
@@ -728,12 +780,16 @@ function bindStaticControls(): void {
   });
 
   ui.start.addEventListener('click', () => {
-    simulationSettings.running = !simulationSettings.running;
+    const shouldRun = !simulationSettings.running;
+    if (shouldRun) {
+      showParticlesForStart();
+    }
+    simulationSettings.running = shouldRun;
     setStartButtonState(simulationSettings.running);
   });
   ui.reset.addEventListener('click', () => {
     stopSimulation();
-    particleSystem?.reset();
+    clearParticlesUntilStart();
   });
   ui.randomize.addEventListener('click', () => {
     currentParams = randomizeParams(getPreset(selectedPresetId).defaultParams);
@@ -747,6 +803,7 @@ function bindStaticControls(): void {
     rebuildCurveAndParticles();
     commitHistoryIfChanged();
   });
+  ui.exportScreenshot.addEventListener('click', exportScreenshot);
   ui.collapseToggle.addEventListener('pointerdown', (event) => {
     event.stopPropagation();
   });
@@ -792,9 +849,9 @@ async function initApp(): Promise<void> {
   }
 
   scene = new Scene();
-  scene.background = new Color(0x111622);
+  scene.background = new Color(0x000000);
 
-  const camera = new PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.01, 100);
+  camera = new PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.01, 100);
   camera.position.set(0, 0.2, 5.2);
 
   renderer = new WebGPURenderer({ antialias: true, canvas: appCanvas });

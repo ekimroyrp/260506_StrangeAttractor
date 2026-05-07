@@ -41,7 +41,7 @@ export class ParticleFlowSystem {
   private readonly scene: Scene;
   private readonly simulationRate = uniform(1);
   private readonly deltaTime = uniform(1 / 60);
-  private readonly particleSize = uniform(0.045);
+  private readonly particleSize = uniform(0.03);
   private readonly particleSpread = uniform(0);
   private readonly particleOpacity = uniform(BASE_PARTICLE_OPACITY);
   private readonly particleBrightness = uniform(0.85);
@@ -156,6 +156,10 @@ export class ParticleFlowSystem {
 
   setParticleSpread(value: number): void {
     this.particleSpread.value = value;
+  }
+
+  setVisible(visible: boolean): void {
+    this.object.visible = visible;
   }
 
   refreshPositions(): void {

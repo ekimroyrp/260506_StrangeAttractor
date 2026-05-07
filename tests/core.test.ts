@@ -22,12 +22,12 @@ function baseState(params: AttractorParams = { b: 0.208186 }): SerializableAppSt
       gradientContrast: 1.4,
       gradientBias: -0.4,
       gradientBlur: 0.35,
-      particleSize: 0.045,
-      particleSpread: 0,
+      particleSize: 0.03,
+      particleSpread: 0.1,
       curveVisible: true,
     },
-    simulationRate: 1,
-    particleAmount: 100000,
+    simulationRate: 0.3,
+    particleAmount: 500000,
   };
 }
 
@@ -140,8 +140,8 @@ describe('history controller', () => {
 describe('particle display tuning', () => {
   it('reduces additive opacity as particle counts rise', () => {
     const low = getParticleOpacityForAmount(1000);
-    const defaultAmount = getParticleOpacityForAmount(100000);
-    const high = getParticleOpacityForAmount(500000);
+    const defaultAmount = getParticleOpacityForAmount(500000);
+    const high = getParticleOpacityForAmount(5000000);
 
     expect(low).toBeGreaterThan(defaultAmount);
     expect(defaultAmount).toBeGreaterThan(high);

@@ -10,9 +10,10 @@
 - Per-preset editable parameters with slider controls and clickable number edit fields.
 - Randomize and Default actions for the active preset parameters.
 - WebGPU particle flow using storage buffers and TSL compute nodes.
-- Gradient start/end, contrast, bias, blur, particle size, particle spread, and curve visibility controls.
-- Runtime stats for FPS, particle count, curve points, active preset, and renderer status.
+- Gradient start/end, contrast, bias, blur, particle size, particle spread, and curve display controls.
+- Runtime stats for WebGPU status, FPS, and particle count.
 - Keyboard-only undo/redo history for app state changes.
+- Screenshot export button for saving the current canvas view as a PNG.
 
 ## Getting Started
 
@@ -55,13 +56,14 @@ Open the app in a current Chromium-based browser with WebGPU enabled.
   - `Wheel` = Zoom
   - `MMB` = Pan
   - `RMB` = Orbit
-- Simulation:
+- Particles:
   - `Start` / `Pause` toggles particle motion.
-  - `Reset` restarts particles on the current attractor curve.
-  - `Simulation Rate` controls particle flow speed.
-  - `Particle Amount` reallocates the GPU particle buffers.
+  - `Reset` clears particles until `Start` is clicked again.
+  - `Particle Amount` reallocates the GPU particle buffers, defaulting to 500,000 with a test maximum of 5,000,000.
   - `Particle Size` controls the soft particle sprite scale.
   - `Particle Spread` sets the maximum random offset distance from the attractor path.
+  - `Particle Speed` controls particle flow speed.
+  - `Curve Display` toggles the attractor curve.
 - Attractor:
   - `Preset` selects the attractor algorithm.
   - Parameter sliders edit only the selected preset's parameters.
@@ -71,7 +73,8 @@ Open the app in a current Chromium-based browser with WebGPU enabled.
 - Material:
   - `Gradient Start` / `Gradient End` set the curve and particle color ramp.
   - `Gradient Contrast`, `Gradient Bias`, and `Gradient Blur` remap the ramp.
-  - `Curve Visibility` toggles the attractor curve.
+- Export:
+  - `Export Screenshot` saves the current canvas view as a PNG.
 - History:
   - `Ctrl+Z` = Undo
   - `Ctrl+Y` or `Ctrl+Shift+Z` = Redo
