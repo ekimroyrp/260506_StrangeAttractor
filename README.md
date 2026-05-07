@@ -10,7 +10,7 @@
 - Per-preset editable parameters with slider controls and clickable number edit fields.
 - Randomize and Default actions for the active preset parameters.
 - WebGPU particle flow using storage buffers and TSL compute nodes.
-- Gradient start/end, contrast, bias, blur, particle size, and curve visibility controls.
+- Gradient start/end, contrast, bias, blur, particle size, particle spread, and curve visibility controls.
 - Runtime stats for FPS, particle count, curve points, active preset, and renderer status.
 - Keyboard-only undo/redo history for app state changes.
 
@@ -60,6 +60,8 @@ Open the app in a current Chromium-based browser with WebGPU enabled.
   - `Reset` restarts particles on the current attractor curve.
   - `Simulation Rate` controls particle flow speed.
   - `Particle Amount` reallocates the GPU particle buffers.
+  - `Particle Size` controls the soft particle sprite scale.
+  - `Particle Spread` sets the maximum random offset distance from the attractor path.
 - Attractor:
   - `Preset` selects the attractor algorithm.
   - Parameter sliders edit only the selected preset's parameters.
@@ -69,7 +71,6 @@ Open the app in a current Chromium-based browser with WebGPU enabled.
 - Material:
   - `Gradient Start` / `Gradient End` set the curve and particle color ramp.
   - `Gradient Contrast`, `Gradient Bias`, and `Gradient Blur` remap the ramp.
-  - `Particle Size` controls the soft particle sprite scale.
   - `Curve Visibility` toggles the attractor curve.
 - History:
   - `Ctrl+Z` = Undo

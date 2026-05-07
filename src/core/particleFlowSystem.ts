@@ -15,6 +15,7 @@ import {
   instancedArray,
   mix,
   mul,
+  normalize,
   shapeCircle,
   uniform,
   uint,
@@ -41,6 +42,7 @@ export class ParticleFlowSystem {
   private readonly simulationRate = uniform(1);
   private readonly deltaTime = uniform(1 / 60);
   private readonly particleSize = uniform(0.045);
+  private readonly particleSpread = uniform(0);
   private readonly particleOpacity = uniform(BASE_PARTICLE_OPACITY);
   private readonly particleBrightness = uniform(0.85);
   private readonly initCompute: Parameters<WebGPURenderer['compute']>[0];
@@ -55,11 +57,13 @@ export class ParticleFlowSystem {
     curveColors: Float32Array,
     amount: number,
     particleSize: number,
+    particleSpread: number,
   ) {
     this.renderer = renderer;
     this.scene = scene;
     this.amount = amount;
     this.particleSize.value = particleSize;
+    this.particleSpread.value = particleSpread;
     this.particleOpacity.value = getParticleOpacityForAmount(amount);
 
     const pathPositions = attributeArray(curve.positions, 'vec3');
@@ -67,6 +71,7 @@ export class ParticleFlowSystem {
     const pathT = instancedArray(amount, 'float');
     const pathIndex = instancedArray(amount, 'float');
     const particleSpeed = instancedArray(amount, 'float');
+    const particleOffset = instancedArray(amount, 'vec3');
     const particlePosition = instancedArray(amount, 'vec3');
     const particleColor = instancedArray(amount, 'vec3');
     const lastPathIndex = Math.max(1, curve.pointCount - 1);
@@ -87,15 +92,25 @@ export class ParticleFlowSystem {
       const p1 = pathPositions.element(nextIndex);
       const c0 = pathColors.element(readIndex);
       const c1 = pathColors.element(nextIndex);
+      const offset = particleOffset.element(instanceIndex).mul(this.particleSpread);
 
       pathIndex.element(instanceIndex).assign(floorIndex);
-      particlePosition.element(instanceIndex).assign(mix(p0, p1, blend));
+      particlePosition.element(instanceIndex).assign(mix(p0, p1, blend).add(offset));
       particleColor.element(instanceIndex).assign(mix(c0, c1, blend));
     });
 
     const init = Fn(() => {
       pathT.element(instanceIndex).assign(hash(instanceIndex.add(uint(17))));
       particleSpeed.element(instanceIndex).assign(hash(instanceIndex.add(uint(811))).mul(0.75).add(0.45));
+      particleOffset.element(instanceIndex).assign(
+        normalize(
+          vec3(
+            hash(instanceIndex.add(uint(101))).mul(2).sub(1),
+            hash(instanceIndex.add(uint(421))).mul(2).sub(1),
+            hash(instanceIndex.add(uint(997))).mul(2).sub(1),
+          ),
+        ).mul(hash(instanceIndex.add(uint(1409)))),
+      );
       samplePath();
     });
 
@@ -137,6 +152,17 @@ export class ParticleFlowSystem {
 
   setParticleSize(value: number): void {
     this.particleSize.value = value;
+  }
+
+  setParticleSpread(value: number): void {
+    this.particleSpread.value = value;
+  }
+
+  refreshPositions(): void {
+    const previousDeltaTime = this.deltaTime.value;
+    this.deltaTime.value = 0;
+    this.renderer.compute(this.updateCompute);
+    this.deltaTime.value = previousDeltaTime;
   }
 
   reset(): void {

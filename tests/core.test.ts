@@ -23,6 +23,7 @@ function baseState(params: AttractorParams = { b: 0.208186 }): SerializableAppSt
       gradientBias: -0.4,
       gradientBlur: 0.35,
       particleSize: 0.045,
+      particleSpread: 0,
       curveVisible: true,
     },
     simulationRate: 1,

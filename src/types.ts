@@ -46,6 +46,7 @@ export type MaterialSettings = {
   gradientBias: number;
   gradientBlur: number;
   particleSize: number;
+  particleSpread: number;
   curveVisible: boolean;
 };
 

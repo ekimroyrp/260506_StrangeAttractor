@@ -32,6 +32,10 @@ type UiRefs = {
   simulationRateValue: HTMLSpanElement;
   particleAmount: HTMLInputElement;
   particleAmountValue: HTMLSpanElement;
+  particleSize: HTMLInputElement;
+  particleSizeValue: HTMLSpanElement;
+  particleSpread: HTMLInputElement;
+  particleSpreadValue: HTMLSpanElement;
   runtimeStats: HTMLDivElement;
   presetSelect: HTMLSelectElement;
   presetTrigger: HTMLButtonElement;
@@ -47,8 +51,6 @@ type UiRefs = {
   gradientBiasValue: HTMLSpanElement;
   gradientBlur: HTMLInputElement;
   gradientBlurValue: HTMLSpanElement;
-  particleSize: HTMLInputElement;
-  particleSizeValue: HTMLSpanElement;
   curveVisible: HTMLInputElement;
 };
 
@@ -269,6 +271,10 @@ const ui: UiRefs = {
   simulationRateValue: requiredElement('simulation-rate-value', isSpan),
   particleAmount: requiredElement('particle-amount', isInput),
   particleAmountValue: requiredElement('particle-amount-value', isSpan),
+  particleSize: requiredElement('particle-size', isInput),
+  particleSizeValue: requiredElement('particle-size-value', isSpan),
+  particleSpread: requiredElement('particle-spread', isInput),
+  particleSpreadValue: requiredElement('particle-spread-value', isSpan),
   runtimeStats: requiredElement('runtime-stats', isDiv),
   presetSelect: requiredElement('attractor-preset', isSelect),
   presetTrigger: requiredElement('attractor-preset-trigger', isButton),
@@ -284,8 +290,6 @@ const ui: UiRefs = {
   gradientBiasValue: requiredElement('gradient-bias-value', isSpan),
   gradientBlur: requiredElement('gradient-blur', isInput),
   gradientBlurValue: requiredElement('gradient-blur-value', isSpan),
-  particleSize: requiredElement('particle-size', isInput),
-  particleSizeValue: requiredElement('particle-size-value', isSpan),
   curveVisible: requiredElement('curve-visible', isInput),
 };
 
@@ -306,6 +310,7 @@ const materialSettings: MaterialSettings = {
   gradientBias: Number.parseFloat(ui.gradientBias.value),
   gradientBlur: Number.parseFloat(ui.gradientBlur.value),
   particleSize: Number.parseFloat(ui.particleSize.value),
+  particleSpread: Number.parseFloat(ui.particleSpread.value),
   curveVisible: ui.curveVisible.checked,
 };
 const simulationSettings: SimulationSettings = {
@@ -376,6 +381,7 @@ function rebuildParticleSystem(): void {
     curveColors,
     simulationSettings.particleAmount,
     materialSettings.particleSize,
+    materialSettings.particleSpread,
   );
   particleSystem.setSimulationRate(simulationSettings.simulationRate);
 }
@@ -456,6 +462,7 @@ function syncStaticControlsFromState(): void {
   setRangeValue(ui.gradientBias, ui.gradientBiasValue, materialSettings.gradientBias, formatFixed(2));
   setRangeValue(ui.gradientBlur, ui.gradientBlurValue, materialSettings.gradientBlur, formatFixed(2));
   setRangeValue(ui.particleSize, ui.particleSizeValue, materialSettings.particleSize, formatFixed(3));
+  setRangeValue(ui.particleSpread, ui.particleSpreadValue, materialSettings.particleSpread, formatFixed(3));
   ui.gradientStart.value = materialSettings.gradientStart;
   ui.gradientEnd.value = materialSettings.gradientEnd;
   ui.curveVisible.checked = materialSettings.curveVisible;
@@ -471,6 +478,7 @@ function applySerializableState(state: SerializableAppState): void {
   materialSettings.gradientBias = state.material.gradientBias;
   materialSettings.gradientBlur = state.material.gradientBlur;
   materialSettings.particleSize = state.material.particleSize;
+  materialSettings.particleSpread = state.material.particleSpread;
   materialSettings.curveVisible = state.material.curveVisible;
   simulationSettings.simulationRate = state.simulationRate;
   simulationSettings.particleAmount = state.particleAmount;
@@ -651,6 +659,29 @@ function bindStaticControls(): void {
     },
   );
   bindRange(
+    ui.particleSize,
+    ui.particleSizeValue,
+    formatFixed(3),
+    (value) => {
+      materialSettings.particleSize = value;
+      particleSystem?.setParticleSize(value);
+    },
+    commitHistoryIfChanged,
+  );
+  bindRange(
+    ui.particleSpread,
+    ui.particleSpreadValue,
+    formatFixed(3),
+    (value) => {
+      materialSettings.particleSpread = value;
+      particleSystem?.setParticleSpread(value);
+      if (!simulationSettings.running) {
+        particleSystem?.refreshPositions();
+      }
+    },
+    commitHistoryIfChanged,
+  );
+  bindRange(
     ui.gradientContrast,
     ui.gradientContrastValue,
     formatFixed(2),
@@ -680,17 +711,6 @@ function bindStaticControls(): void {
     },
     commitHistoryIfChanged,
   );
-  bindRange(
-    ui.particleSize,
-    ui.particleSizeValue,
-    formatFixed(3),
-    (value) => {
-      materialSettings.particleSize = value;
-      particleSystem?.setParticleSize(value);
-    },
-    commitHistoryIfChanged,
-  );
-
   ui.gradientStart.addEventListener('input', () => {
     materialSettings.gradientStart = ui.gradientStart.value;
     rebuildCurveAndParticles();
